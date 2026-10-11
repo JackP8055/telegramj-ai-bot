@@ -38,7 +38,7 @@ def handle_text(message):
         # Direct prompt ke sath Gemini 1.5 Flash ko call
         full_prompt = f"{SYSTEM_PROMPT}\n\nUser: {message.text}\nAI Dost:"
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             contents=full_prompt
         )
         bot.reply_to(message, response.text)
