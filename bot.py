@@ -1,7 +1,21 @@
 import os
+import threading
+from flask import Flask
 import telebot
 from google import genai
 
+# 1. Dummy Web Server (Render Port Binding ke liye)
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Telegram AI Bot is Running 24/7!"
+
+def run_flask():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
+
+# 2. Telegram Bot & AI Brain
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -43,4 +57,7 @@ def handle_text(message):
         bot.reply_to(message, "Bhai connection issue hua, ek baar dubara message bhejna!")
 
 if __name__ == "__main__":
+    # Background thread mein Flask start hoga port scan satisfy karne ke liye
+    threading.Thread(target=run_flask).start()
+    # Main thread mein Telegram bot listen karega
     bot.infinity_polling()
