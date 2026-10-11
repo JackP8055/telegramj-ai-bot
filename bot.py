@@ -2,9 +2,9 @@ import os
 import threading
 from flask import Flask
 import telebot
-from google import genai
+import google.generativeai as genai
 
-# 1. Render Port Binding
+# 1. Dummy Web Server (Render Port Binding)
 app = Flask(__name__)
 
 @app.route('/')
@@ -15,36 +15,35 @@ def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
 
-# 2. Telegram & Gemini Setup
+# 2. Telegram aur Gemini Setup
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 API_KEY = os.getenv("GEMINI_API_KEY")
 
 bot = telebot.TeleBot(TOKEN)
-client = genai.Client(api_key=API_KEY)
 
-SYSTEM_PROMPT = (
-    "Aap user ke ek close dost, trading mentor aur personal guide ho. "
-    "Aap bilkul natural Hindi/Hinglish mein baat karte ho. "
-    "User ke sawalon ka seedha, friendly aur helpful jawab do."
+# Google Gemini configure
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel(
+    model_name="gemini-2.5-flash",
+    system_instruction=(
+        "Aap user ke ek close dost aur personal trading mentor ho. "
+        "Aap natural Hindi/Hinglish mein baat karte ho. "
+        "Friendly, practical aur supportive tareeqe se jawab do."
+    )
 )
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
-    bot.reply_to(message, "Haan bhai! Kaisa hai? Main 24/7 live hoon, bata kya haal chaal?")
+    bot.reply_to(message, "Haan bhai! Kaisa hai? Main 24/7 active hoon, bata kya chal raha hai?")
 
 @bot.message_handler(func=lambda msg: True)
 def handle_text(message):
     try:
-        # Direct prompt ke sath Gemini 1.5 Flash ko call
-        full_prompt = f"{SYSTEM_PROMPT}\n\nUser: {message.text}\nAI Dost:"
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=full_prompt
-        )
+        response = model.generate_content(message.text)
         bot.reply_to(message, response.text)
     except Exception as e:
-        print(f"Error details: {e}")
-        bot.reply_to(message, f"Issue detail: {str(e)[:100]}")
+        print(f"Error: {e}")
+        bot.reply_to(message, f"Issue detail: {str(e)[:120]}")
 
 if __name__ == "__main__":
     threading.Thread(target=run_flask).start()
